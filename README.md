@@ -18,24 +18,51 @@
 - [Jupyter Notebook](https://github.com/jupyter/notebook)
 - [Stuctural Variant Annotation](https://www.bioconductor.org/packages/release/bioc/html/StructuralVariantAnnotation.html) R package used to annotate Gridss and Lumpy output
 
+#### How to run pipeline after software installation 
 
-
-
-#### Coverage and verification of merged regions:
-
-Analyzed read depth at each region of samples using Samtools: 
+- Clone repo and add scripts to data folder 
+- run the runScript.sh like so:
 ```
-samtools bedcov allSV_bed.bed input.bams > allSV_SambedCov.bed 
-```
-Makes bash script to run inside IGV for image generation:
-```
-bedtools igv -path igvFolder -slop 100 -i combinedAll.bed > allSV_igvScript.sh
-```
-- slop is how many bp flanking each region 
-Load in all bams and click igvTools ---> run batch script  (to automatically generate images of all regions)
-***NOTE:*** Changed alignment preferences to be able to visualize larger regions then the default of 20kp. However with a large number of samples and visualizing large regions is dependent on  memory capacity. 
+svFolder= path/to/sv/foldertestSV            
+cd $svFolder            
+chmod u+x runScript.sh
+mydata=$(pwd)
+refs=$mydata/refs           ##replace refs with reference folder name 
+bams=$mydata/bams           ##replace bams with bam folder name
+reference=$refs/refSeqName  ##replace refSeqName with name of reference file inside of refs folder 
+insertSize = 250            ##input estimated insert size based on sequence data 
 
-### Structural Variant Analysis GUI
+./runScript.sh -d $mydata -b $bams -r $reference -i 250
+```
+- convert delly output using bcftools:
+```
+##converting delly from bcf to vcf 
+
+cd $svFolder/delly
+for file in *.bcf ;
+do
+out=${file%.bcf}.vcf
+bcftools view -Ov -o $out $file
+done
+```
+-run reformat python script 
+```
+for b in $svFolder/stats/*.stats
+do
+tmp=${b##*/}
+sample=${tmp%.sorted.stats}
+python3 $svFolder/reformat_merge.py $projectD/$svFolder $sample
+done
+```
+-overlap all samples calls after reformatted
+```
+numSamples=20                   ## replace 20 with number of samples 
+python3 $projectD/$svFolder/overlapSamples.py $projectD/$svFolder/mergeSV $numSamples
+```
+
+### Coverage and verification of merged regions:
+
+#### Structural Variant Analysis GUI
 
 * SVGui.java is a graphic interface to batch view igv images and automate other portions of pipeline (***still a work in progress***)
 * Quick youtube video to demo what GUI looks like and what each tool will display can be found [here](https://www.youtube.com/watch?v=kPWZuFNhOJI&feature=youtu.be)
@@ -52,8 +79,10 @@ Load in all bams and click igvTools ---> run batch script  (to automatically gen
 ##### NOTES ABOUT IMAGE FORMAT AND GENERATION:
 ----
 Images were generated of desired regions by first taking all regions (in bed format) in which would like to validate/analyze and running bedtools like so:
- ```
-bedtools igv -path igvFolder -slop 100 -i combinedAll.bed > allSV_igvScript.sh
+- Make a folder where you would like images to be, in example below made folder igvFolder
+- Makes bash script to run inside IGV for image generation:
+```
+bedtools igv -path path/to/igvFolder -slop 100 -i $svFolder/mergeSV/noShareSV.bed > $svFolder/allSV_igvScript.sh
 ```
 > slop is the number of bp would like to be flanking region (must include for proper import into GUI so if wish to not have any just put 0)
 
