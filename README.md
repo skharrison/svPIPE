@@ -15,7 +15,7 @@
 - [Bcftools](https://github.com/samtools/bcftools)
 - [Bedtools](https://github.com/arq5x/bedtools2)
 - [IGV](https://github.com/igvteam/igv)
-- [Jupyter Notebook](https://github.com/jupyter/notebook)
+- [Jupyter Notebook](https://github.com/jupyter/notebook) (optional but example pipeline inside of notebook but requires SOS notebook from jupyterlab to use)
 - [Stuctural Variant Annotation](https://www.bioconductor.org/packages/release/bioc/html/StructuralVariantAnnotation.html) R package used to annotate Gridss and Lumpy output
 
 #### How to run pipeline after software installation 
@@ -45,7 +45,7 @@ out=${file%.bcf}.vcf
 bcftools view -Ov -o $out $file
 done
 ```
--run reformat python script 
+- Run reformat python script 
 ```
 for b in $svFolder/stats/*.stats
 do
@@ -54,7 +54,7 @@ sample=${tmp%.sorted.stats}
 python3 $svFolder/reformat_merge.py $projectD/$svFolder $sample
 done
 ```
--overlap all samples calls after reformatted
+- Overlap all samples calls after reformatted
 ```
 numSamples=20                   ## replace 20 with number of samples 
 python3 $projectD/$svFolder/overlapSamples.py $projectD/$svFolder/mergeSV $numSamples
